@@ -1,0 +1,16 @@
+.btn {
+    width: 300px;
+    margin-top: 25px;
+    margin-bottom: 20px;
+    font-size: 25px;
+    font-family: 'Nunito Sans', sans-serif;
+    font-weight: 800;
+    background-color: #1db954;
+    border-color: #1db954;
+    color: #282828;
+}
+
+.btn:hover {
+    background-color: #15823b;
+    border-color: #15823b;
+}
