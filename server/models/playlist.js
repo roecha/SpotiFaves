@@ -1,5 +1,5 @@
 const { v4: uuidv4 } = require("uuid");
-let User = require("../models/user.js");
+// let User = require("../models/user.js");
 
 class Playlist {
     constructor(id, name, songs) {
@@ -20,28 +20,28 @@ class Playlist {
 // module.exports = mongoose.model("Playlist", playlistSchema);
 
 // Create a new playlist
-Playlist.createPlaylist = async (username) => {
-    const user = await User.getUserByUsername(username);
-        if (!user) {
-            throw new Error("User not found");
-        }
+// Playlist.createPlaylist = async (username) => {
+//     const user = await User.getUserByUsername(username);
+//         if (!user) {
+//             throw new Error("User not found");
+//         }
 
-        let playlistNum = Object.keys(user.playlists).length + 1;
-        // Create a new playlist and link it to the user
-        const playlist = new Playlist(uuidv4(), `Playlist #${playlistNum}`, []);
+//         let playlistNum = Object.keys(user.playlists).length + 1;
+//         // Create a new playlist and link it to the user
+//         const playlist = new Playlist(uuidv4(), `Playlist #${playlistNum}`, []);
 
-        if (user.playlists)
-            user.playlists[playlist.id] = {id: playlist.id, name: playlist.name, songs: playlist.songs};
-        else {
-            let list = {}
-            list[playlist.id] = {id: playlist.id, name: playlist.name, songs: playlist.songs};
-            user.playlists = list;
-        }
+//         if (user.playlists)
+//             user.playlists[playlist.id] = {id: playlist.id, name: playlist.name, songs: playlist.songs};
+//         else {
+//             let list = {}
+//             list[playlist.id] = {id: playlist.id, name: playlist.name, songs: playlist.songs};
+//             user.playlists = list;
+//         }
 
-        await User.updateUserByUsername(username, user);
+//         await User.updateUserByUsername(username, user);
 
-        return playlist;
-};
+//         return playlist;
+// };
 
 
 module.exports = Playlist;

@@ -16,7 +16,7 @@ export class MusicInfoService {
       params = params.set('code', code);
     if(state)
       params = params.set('state', state);
-    params.set('term', term);
+    params = params.set('term', term);
     return this.http.get(`${this.baseUrl}/`, { params: params, withCredentials: true });
   }
 
