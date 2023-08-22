@@ -9,7 +9,6 @@ let Album = require("../models/album.js");
 let Artist = require("../models/artist.js");
 let Playlist = require("../models/playlist.js");
 let HomeInfo = require("../models/home-info.js");
-const { access } = require("fs");
 
 var router = express.Router();
 dotenv.config();
@@ -53,17 +52,53 @@ router.get("/", async function (req, res) {
             };
 
             // Call the api to get user access token
-            await request.post(authOptions, function (error, response, body) {
+            request.post(authOptions, function (error, response, body) {
                 if (!error && response.statusCode === 200) {
+                    accessToken = body.access_token,
                     refreshToken = body.refresh_token;
                     req.session.accessToken = accessToken;
-                    homeRequest(accessToken, term);
+
+                    var options = {
+                        url: "https://api.spotify.com/v1/me",
+                        headers: { Authorization: "Bearer " + accessToken },
+                        json: true,
+                    };
+            
+                     // use the access token to access the Spotify Web API 
+                     request.get(options, async function (error, response, body) {
+                        try {
+                            // Get the top songs of the user 
+                            const result = await getHomeInfo(term, accessToken);
+                            res.json(result);
+                        } catch (error) {
+                            console.error("Error fetching top tracks:", error);
+                            res.status(500).send("Error fetching top tracks");
+                        }
+                    });
+
                 } else {
                     res.status(400).send({ msg: "invalid user" });
                 }
             });
+            
         } else {
-            homeRequest(accessToken, term);
+            var options = {
+                url: "https://api.spotify.com/v1/me",
+                headers: { Authorization: "Bearer " + accessToken },
+                json: true,
+            };
+    
+             // use the access token to access the Spotify Web API 
+             request.get(options, async function (error, response, body) {
+                try {
+                    // Get the top songs of the user 
+                    const result = await getHomeInfo(term, accessToken);
+                    res.json(result);
+                } catch (error) {
+                    console.error("Error fetching top tracks:", error);
+                    res.status(500).send("Error fetching top tracks");
+                }
+            });
         }
     }
 });
@@ -115,28 +150,6 @@ async function getTopTracks(token) {
             token
         )
     ).items;
-}
-
-function homeRequest(accessToken, term) {
-    console.log("**************")
-    console.log(accessToken)
-    var options = {
-        url: "https://api.spotify.com/v1/me",
-        headers: { Authorization: "Bearer " + accessToken },
-        json: true,
-    };
-
-     // use the access token to access the Spotify Web API 
-     request.get(options, async function (error, response, body) {
-        try {
-            // Get the top songs of the user 
-            const result = await getHomeInfo(term, accessToken);
-            res.json(result);
-        } catch (error) {
-            console.error("Error fetching top tracks:", error);
-            res.status(500).send("Error fetching top tracks");
-        }
-    });
 }
 
 /** Gets the information required to display the home screen */
@@ -302,7 +315,7 @@ function makeSongList(list, isAlbum, token) {
         );
     } else {
         
-        console.log(list);
+        // console.log(list);
         list.forEach((item) =>
             songList.push(createSongObject(item, false, token))
         );
