@@ -68,7 +68,7 @@
                         <td class="align-baseline clickable align-middle"><img src="{{song.img}}" alt="{{song.name}} image" style="width: 50px; height: 50px;"></td>
 
                         <td class="align-baseline clickable align-middle" [routerLink]="['/song/' + song.id]">{{song.name}}</td>
-                        <!-- <td class="align-baseline align-middle">{{convertMilliseconds(song.duration)}}</td> -->
+                        <td class="align-baseline align-middle">{{convertMilliseconds(song.duration)}}</td>
                         <td class="align-baseline align-middle">
                             <div  class="clickable" [routerLink]="['/artist/' + artist.id]" *ngFor="let artist of song.artist">
                                 {{artist.name}}

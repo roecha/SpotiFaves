@@ -24,4 +24,14 @@ export class MusicInfoService {
     console.log("hereeeeee")
     return this.http.get(`${this.baseUrl}/songs`);
   }
+
+  getDurationSeconds(duration : string) {
+    var milliseconds = Number(duration);
+    var minutes = Math.floor(milliseconds / 60000);
+    var seconds = ((milliseconds % 60000) / 1000).toFixed(0);
+    var time = minutes + ":" + (milliseconds < 10 ? "0" : "") + seconds
+    return time.length == 3 ? time + "0" : time;
 }
+}
+
+

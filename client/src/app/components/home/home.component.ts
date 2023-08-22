@@ -83,6 +83,10 @@ export class HomeComponent {
       });
     }
 
+    convertMilliseconds(duration : string) {
+      return this.MusicInfoService.getDurationSeconds(duration);
+    }
+
     // createNewPlaylist() {
     //   this.MusicInfoService.createPlaylist().subscribe(playlist => {
     //     this.router.navigate(['/playlist/' + playlist.id]);
