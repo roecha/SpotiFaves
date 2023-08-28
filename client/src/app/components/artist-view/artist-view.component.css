@@ -1,0 +1,117 @@
+.card-img {
+    width: 21em;
+    height: 21em;
+}
+
+.card {
+    background-color: #1db954;
+    margin-top: 20px;
+}
+
+.card-body {
+    font-family: 'Nunito Sans', sans-serif;
+}
+
+.inline-list {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.inline-list p {
+    margin: 0;
+    margin-right: 5px;
+    padding: 0;
+    white-space: nowrap;
+}
+
+table {
+    margin-top: 50px;
+    font-family: 'Nunito Sans', sans-serif;
+}
+
+th {
+    font-weight: 700;
+    font-size: 20px;
+}
+
+th, td {
+    background-color: #535353;
+    color: #FFFFF0 !important;
+}
+
+.clickable {
+    font-weight: 500;
+    margin-bottom: 5px;
+    cursor: pointer;
+}
+
+.clickable:hover {
+    color: #1db954 !important;
+}
+
+.top-tracks {
+    margin-top: 20px;
+}
+
+.carousel-small {
+    max-width: 400px; 
+}
+
+ngb-carousel::ng-deep .carousel-indicators {
+    display: none;
+}
+
+.slide-container {
+    display: flex; 
+    flex-direction: column;
+    align-items: center;
+}
+
+.slide-container img {
+    max-width: 100%; 
+}
+
+.carousel-caption {
+    max-width: 100%; 
+    text-align: center; 
+}
+
+.song-name {
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    white-space: nowrap; 
+    margin: 0; 
+    font-size: 20px;
+    text-shadow: 2px 2px 5px black;
+}
+
+#spotify-button {
+    width: 8em;
+    height: auto;
+    border: 3px solid #1db954;
+    border-radius: 100px;
+    background-color: #282828;
+    color: #1db954;
+    font-family: 'Nunito Sans', sans-serif;
+    font-weight: 900;
+    font-size: 17px;
+    cursor: pointer;
+}
+
+#open-in {
+    margin-top: 25px;
+    font-family: 'Nunito Sans', sans-serif;
+    font-weight: 900;
+    font-size: 17px;
+}
+
+#logo {
+    width: 6em;
+    height: auto;
+    margin: 5px 0;
+}
+
+#spotify-button:hover {
+    background-color: #535353;
+}

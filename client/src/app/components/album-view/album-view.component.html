@@ -1,0 +1,71 @@
+<div class="background">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-4"></div>
+      <div class="col-md-4">
+        <img
+          class="mx-auto d-block shadow"
+          src="{{ album.img }}"
+          alt="'{{ album.name }}' cover art"
+        />
+        <h1 class="text-center" style="text-shadow: 1px 1px 5px black">
+          {{ album.name }}
+        </h1>
+      </div>
+      <div class="col-md-4">
+        <div class="text-center mx-auto shadow" id="popularity">
+          <p style="margin-bottom: 0px; font-size: 20px">Popularity Score:</p>
+          <p id="score">{{ album.popularity }}</p>
+        </div>
+
+        <div class="container mx-auto text-center">
+          <p id="open-in">Open in</p>
+          <div
+            class="text-center mx-auto shadow"
+            id="spotify-button"
+            (click)="openSpotify()"
+          >
+            <img id="logo" src="../../../assets/logo2.png" alt="spotify logo" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row justify-content-center align-items-center">
+      <div class="col-md-8 text-center">
+        <table class="table table-borderless table-striped">
+          <thead class="table-secondary">
+            <tr>
+              <th>#</th>
+              <th scope="col">Song</th>
+              <th scope="col">Duration</th>
+              <th scope="col">Artist(s)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let song of album.songs; let i = index">
+              <td class="align-baseline align-middle">{{ i + 1 }}</td>
+              <td
+                class="align-baseline clickable align-middle"
+                [routerLink]="['/song/' + song.id]"
+              >
+                {{ song.name }}
+              </td>
+              <td class="align-baseline align-middle">
+                {{ convertMilliseconds(song.duration) }}
+              </td>
+              <td class="align-baseline align-middle">
+                <div
+                  class="clickable align-middle"
+                  [routerLink]="['/artist/' + artist.id]"
+                  *ngFor="let artist of song.artist"
+                >
+                  {{ artist.name }}
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

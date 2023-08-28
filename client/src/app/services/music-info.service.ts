@@ -1,37 +1,81 @@
+import { Playlist } from 'src/app/models/playlist';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Constants } from '../constants/constants';
+import { Observable } from 'rxjs';
+import { Song } from '../models/song';
+import { Album } from '../models/album';
+import { Artist } from '../models/artist';
+import { User } from '../models/user';
+import { HomeInfo } from '../models/home-info';
+import { observeNotification } from 'rxjs/internal/Notification';
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class MusicInfoService {
-  private baseUrl = 'http://localhost:3000';
 
-  constructor( private http : HttpClient ) { }
+  private URL : string = Constants.API_VERSION;
 
-  getHomeInfo(code: string | null, state: string | null, term: string): Observable<any> {
-    let params = new HttpParams();
-    if (code)
-      params = params.set('code', code);
-    if(state)
-      params = params.set('state', state);
-    params = params.set('term', term);
-    return this.http.get(`${this.baseUrl}/`, { params: params, withCredentials: true });
+  constructor( private http : HttpClient ) {
   }
 
-  getSongs(): Observable<any> {
-    console.log("hereeeeee")
-    return this.http.get(`${this.baseUrl}/songs`);
-  }
-
-  getDurationSeconds(duration : string) {
+  
+ getDurationSeconds(duration : string) {
     var milliseconds = Number(duration);
     var minutes = Math.floor(milliseconds / 60000);
     var seconds = ((milliseconds % 60000) / 1000).toFixed(0);
     var time = minutes + ":" + (milliseconds < 10 ? "0" : "") + seconds
     return time.length == 3 ? time + "0" : time;
 }
-}
 
+  // ADD ID TO THSI
+  getSongInfo(id : string) : Observable<Song> {
+    return this.http.get<Song>(this.URL + "/song/" + id)
+  } 
+
+  getAlbumInfo(id : string) : Observable<Album> {
+    return this.http.get<Album>(this.URL + "/album/" + id)
+  } 
+
+  getArtistInfo(id : string) : Observable<Artist> {
+    return this.http.get<Artist>(this.URL + "/artist/" + id)
+  } 
+
+   getHomeInfo(key: string | null, term : string) : Observable<HomeInfo> {
+    let params = new HttpParams();
+    if (key) {
+      params = params.set('key', key);
+    }
+    if (term) {
+      params = params.set('term', term);
+    }
+    return this.http.get<HomeInfo>(this.URL, { params: params });
+  }
+
+  getPlaylist(pid : string) : Observable<Playlist> {
+    return this.http.get<Playlist>(this.URL + "/playlist/" + pid)
+  }
+
+  createPlaylist() : Observable<Playlist> {
+    return this.http.post<Playlist>(this.URL + "/playlist", null);
+  }
+
+  editPlaylist(playlist : Playlist) : Observable<Playlist> {
+    let body = {playlist : playlist};
+    return this.http.put<Playlist>(this.URL + "/playlist", body);
+  }
+
+  deletePlaylist(pid : String) : Observable<Playlist> {
+    let url = this.URL + "/playlist/" + pid;
+    return this.http.delete<Playlist>(url);
+  }
+
+  addToSpotify(playlist : Playlist) : Observable<Playlist> {
+    let body = {playlist : playlist};
+    return this.http.post<Playlist>(this.URL + "/addToSpotify", body);
+  }
+ 
+}
 

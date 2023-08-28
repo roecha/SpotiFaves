@@ -1,0 +1,73 @@
+<div class="container mt-5">
+  <div class="row">
+    <div class="col text-center"> 
+     
+
+      <div *ngIf="editName == false">
+        <p style="margin: 0;" (click)="editName = !editName">(click to edit)</p>
+      </div>
+      <h1 class="playlist-name mb-4" (click)="editName = true">{{ playlist.name }}</h1>
+      <input *ngIf="editName" [(ngModel)]="playlist.name" class="form-control mb-4" (blur)="changePlaylistName()" />
+      
+       <div class="button-container">
+        <button class="btn btn-primary" [routerLink]="['/home']">
+          <i class="fa-solid fa-house" style="margin-right: 10px;"></i>Home
+        </button>
+        <div *ngIf="confirm == false">
+          <button class="btn btn-danger" (click)="confirm = true">
+            <i class="fa-solid fa-trash-can" style="margin-right: 10px;"></i>Delete Playlist
+          </button>
+        </div>
+        <div *ngIf="confirm == true">
+          <button class="btn btn-danger" (click)="deletePlaylist()">
+            CONFIRM
+          </button>
+        </div>
+        <div *ngIf="added == false">
+          <button class="btn" id = "add-to-spot" (click)="addToSpotify()">
+            <i class="fa-brands fa-spotify" style="margin-right: 10px;"></i>Add to Spotify 
+          </button>
+         </div> 
+         <div *ngIf="added == true">
+          <button class="btn" id = "add-to-spot" (click)="addToSpotify()">
+            <i class="fa-brands fa-spotify" style="margin-right: 10px;"></i>ADDED
+          </button>
+         </div> 
+      </div>
+    </div>
+  </div>
+  <div class="row mt-4">
+    <div class="col-md-6 offset-md-3">
+      <div class="form-outline mb-3">
+        <input type="search" id="form1" [(ngModel)]="queryString" (ngModelChange)="searchSong()" class="form-control" placeholder="Search Song" aria-label="Search" />
+      </div>
+    </div>
+  </div>
+  <div class="row mt-4">
+    <div class="col-md-8 offset-md-2">
+      <table class="table table-borderless table-striped">
+        <thead>
+          <tr>
+            <th scope="col"></th>
+            <th scope="col">Song Name</th>
+            <th scope="col">Artist Name</th>
+            <th scope="col">Delete?</th>
+          </tr>
+        </thead>
+        <tbody cdkDropList (cdkDropListDropped)="reorderSongs($event)">
+          <tr *ngFor="let song of playlist.songs; let i = index;">
+            <td  class="align-baseline align-middle"><img src="{{ song.img }}" alt="{{ song.name }}" width="50"></td>
+            <td  class="align-baseline clickable align-middle" [routerLink]="['/song/' + song.id]">{{ song.name }}</td>
+            <td class="align-baseline align-middle">
+              <div  class="clickable" [routerLink]="['/artist/' + artist.id]" *ngFor="let artist of song.artist">
+                {{artist.name}}
+              </div>
+            </td>
+            <td class="align-baseline align-middle">
+              <button type="button align-middle" class="btn btn-danger shadow mx-auto" (click)="deleteSong(i)"><i class="fa-solid fa-x" style="margin: 1px 1px 0px 0px;"></i></button>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

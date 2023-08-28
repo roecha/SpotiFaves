@@ -1,139 +1,136 @@
-var express = require("express");
-var router = express.Router();
-var app = express();
+let express = require("express");
+let Users = require("../models/user");
+let router = express.Router();
+let bcrypt = require("bcrypt");
 
-var client_id = "a60f72836d8e4dfb8be250a233cf6c71";
-var client_secret = "6ec29f72f13347c3a52105c2b1a8a977";
-var redirect_uri = "http://localhost:8888/callback";
-
-var generateRandomString = function (length) {
-    var text = "";
-    var possible =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-    for (var i = 0; i < length; i++) {
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
+function createUserList(users) {
+    var userList = [];
+    var id;
+    for (let i = 0; i < users.length; i++) {
+        newUser = new Users(users[i]);
+        userList.push(newUser)
     }
-    return text;
-};
+    return userList;
+}
 
+// Create a new user
+router.post("/user", async (req, res) => {
+    try {
+        let user = req.body;
+        let checkIfTaken = await Users.getUserByUsername(user.username);
+        if (checkIfTaken) {
+            res.status(401).json(ERROR);
+        }
+        user.password = bcrypt.hashSync(user.password, 10);
+        let id = await Users.addUser(user);
 
-
-var stateKey = "spotify_auth_state";
-
-app.get("/login", function (req, res) {
-    var state = generateRandomString(16);
-    res.cookie(stateKey, state);
-
-    // redirect to ask for user permission
-    var scope = "user-read-private user-read-email";
-    res.redirect(
-        "https://accounts.spotify.com/authorize?" +
-            querystring.stringify({
-                response_type: "code",
-                client_id: client_id,
-                scope: scope,
-                redirect_uri: redirect_uri,
-                state: state,
-            })
-    );
-});
-
-app.get("/callback", function (req, res) {
-    // your application requests refresh and access tokens
-    // after checking the state parameter
-
-    var code = req.query.code || null;
-    var state = req.query.state || null;
-    var storedState = req.cookies ? req.cookies[stateKey] : null;
-
-    if (state === null || state !== storedState) {
-        res.redirect(
-            "/#" +
-                querystring.stringify({
-                    error: "state_mismatch",
-                })
-        );
-    } else {
-        res.clearCookie(stateKey);
-        var authOptions = {
-            url: "https://accounts.spotify.com/api/token",
-            form: {
-                code: code,
-                redirect_uri: redirect_uri,
-                grant_type: "authorization_code",
-            },
-            headers: {
-                Authorization:
-                    "Basic " +
-                    new Buffer(client_id + ":" + client_secret).toString(
-                        "base64"
-                    ),
-            },
-            json: true,
-        };
-
-        request.post(authOptions, function (error, response, body) {
-            if (!error && response.statusCode === 200) {
-                var access_token = body.access_token,
-                    refresh_token = body.refresh_token;
-
-                var options = {
-                    url: "https://api.spotify.com/v1/me",
-                    headers: { Authorization: "Bearer " + access_token },
-                    json: true,
-                };
-
-                // use the access token to access the Spotify Web API
-                request.get(options, function (error, response, body) {
-                    console.log(body);
-                });
-
-                // we can also pass the token to the browser to make requests from there
-                res.redirect(
-                    "/#" +
-                        querystring.stringify({
-                            access_token: access_token,
-                            refresh_token: refresh_token,
-                        })
-                );
-            } else {
-                res.redirect(
-                    "/#" +
-                        querystring.stringify({
-                            error: "invalid_token",
-                        })
-                );
-            }
+        res.send(new Users(user));
+        
+    } catch (err) {
+        res.status(400).json({
+            status: 400,
+            message: err.message,
         });
     }
 });
 
-app.get("/refresh_token", function (req, res) {
-    // requesting access token from refresh token
-    var refresh_token = req.query.refresh_token;
-    var authOptions = {
-        url: "https://accounts.spotify.com/api/token",
-        headers: {
-            Authorization:
-                "Basic " +
-                new Buffer(client_id + ":" + client_secret).toString("base64"),
-        },
-        form: {
-            grant_type: "refresh_token",
-            refresh_token: refresh_token,
-        },
-        json: true,
-    };
+/* Gets the list of users from the DB */
+router.get("/userlist", async (req, res) => {
+    let search = null;
+    if (req.query.search) {
+        search = req.query.search
+    }
+    try {
+        let users = createUserList(await Users.getUserList(search));
+        res.status(200).json(users);
+    } catch (err) {
+        res.status(400).json({
+            status: 400,
+            message: err.message,
+        });
+    }
+});
 
-    request.post(authOptions, function (error, response, body) {
-        if (!error && response.statusCode === 200) {
-            var access_token = body.access_token;
-            res.send({
-                access_token: access_token,
+/** Update user */
+router.put("/user/:uid", async (req, res) => {
+    try {
+        let user = await Users.getUserByUsername(req.params.uid);
+        user.username = req.body.username;
+        user.password = bcrypt.hashSync(req.body.password, 10);
+        user.isAdmin = req.body.isAdmin;
+
+        await Users.updateUserByUsername(req.params.uid, user);
+        res.status(200).json({
+            status: 200,
+            message: "User updated",
+        });
+        
+    } catch (err) {
+        res.status(400).json({
+            status: 400,
+            message: err.message,
+        });
+    }
+});
+
+/** Delete a user */
+router.delete("/user/:uid", async (req, res) => {
+    try {
+        let user = await Users.deleteByUsername(req.params.uid);
+        if (user) {
+            res.status(200).json(user);
+        } else {
+            res.status(400).json({
+                status: 400,
+                message: "No post found",
             });
         }
+
+    } catch (err) {
+        res.status(400).json({
+            status: 400,
+            message: err.message,
+        });
+    }
+});
+
+router.post("/login", async (req, res, next) => {
+    var user = await Users.getUserByUsername(req.body.username);
+
+    const ERROR = "Invalid credentials";
+    if (user) {
+        req.session.regenerate(() => {
+            bcrypt.compare(
+                req.body.password,
+                user.password,
+
+                (error, result) => {
+                    if (result) {
+                        delete user.password;
+
+                        req.session.cookie.expires = 3600000;
+                        req.session.user = user;
+                        res.json(user);
+                    } else {
+                        res.status(401).json(ERROR);
+                    }
+                }
+            );
+        });
+    } else {
+        res.status(401).json(ERROR);
+    }
+});
+
+router.post("/logout", (req, res, next) => {
+    req.session.destroy(() => {
+        res.status(200).send({});
     });
+});
+
+router.get("/who", (req, res, next) => {
+    let result = req.session && req.session.user;
+    res.json(result);
 });
 
 module.exports = router;

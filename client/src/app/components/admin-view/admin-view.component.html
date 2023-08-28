@@ -1,0 +1,188 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-6">
+      <form id="create-form" class="mx-auto">
+        <h3>Create New User</h3>
+        <div class="text-center">
+          <div>
+            <div class="form-group mb-2">
+              <label for="lg_username" class="sr-only">E-mail</label>
+              <input
+                type="text"
+                class="form-control"
+                name="username"
+                placeholder="username"
+                [(ngModel)]="username"
+              />
+            </div>
+            <div class="form-group mb-2">
+              <label for="lg_password" class="sr-only">Password</label>
+              <input
+                type="password"
+                class="form-control"
+                name="password"
+                placeholder="password"
+                [(ngModel)]="password"
+              />
+            </div>
+          </div>
+          <div class="form-check">
+            <input
+              type="checkbox"
+              value=""
+              id="check-admin"
+              name="admin"
+              [(ngModel)]="isAdmin"
+            />
+            <label
+              class="form-check-label"
+              for="check-admin"
+              style="color: #fffff0; margin-left: 5px"
+              >Admin?</label
+            >
+          </div>
+          <button
+            type="submit"
+            class="btn mx-auto"
+            style="margin-left: 100px"
+            (click)="createUser()"
+          >
+            Create
+          </button>
+          <p *ngIf="errorNum == 1" class="text-center" style="color: red">
+            Username already taken...
+          </p>
+          <p *ngIf="errorNum == 2" class="text-center" style="color: red">
+            Please provide a username...
+          </p>
+          <p *ngIf="errorNum == 3" class="text-center" style="color: red">
+            Please provide a password...
+          </p>
+          <p *ngIf="errorNum == 4" class="text-center" style="color: red">
+            Please provide a username and password...
+          </p>
+        </div>
+      </form>
+    </div>
+    <div class="col-6">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-12">
+            <h1 class="mb-4" style="margin-top: 10px">All Users</h1>
+            <div class="form-outline mb-3">
+              <input
+                type="search"
+                id="form1"
+                [(ngModel)]="queryString"
+                (ngModelChange)="searchUser()"
+                class="form-control"
+                placeholder="Search Users"
+                aria-label="Search"
+              />
+            </div>
+            <table class="table table-borderless table-striped">
+              <thead>
+                <tr>
+                  <th>Username:</th>
+                  <th>Admin?</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let user of userList">
+                  <td>{{ user.username }}</td>
+                  <td>
+                    <div *ngIf="user.isAdmin">yes</div>
+                    <div *ngIf="!user.isAdmin">no</div>
+                  </td>
+                  <td>
+                    <div *ngIf="user.editing">
+                      <button class="btn btn-sm" (click)="toggleEdit(user)">
+                        Cancel
+                      </button>
+                    </div>
+                    <div *ngIf="!user.editing">
+                      <button class="btn btn-sm" (click)="toggleEdit(user)">
+                        Edit
+                      </button>
+                    </div>
+
+                    <div *ngIf="user.editing && userEditing" class="editing">
+                      <form (submit)="saveUser(userEditing)">
+                        <div>
+                          <div class="form-group">
+                            <label for="username">Username:</label>
+                            <input
+                              type="text"
+                              class="form-control"
+                              id="username"
+                              name="username"
+                              [(ngModel)]="userEditing.username"
+                            />
+                          </div>
+                          <div class="form-group">
+                            <label for="password">Password:</label>
+                            <input
+                              type="text"
+                              class="form-control"
+                              id="password"
+                              name="password"
+                              [(ngModel)]="userEditing.password"
+                            />
+                          </div>
+                          <div
+                            class="form-check"
+                            style="margin: 10px 0px 10px 0px"
+                          >
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              id="admin"
+                              name="admin"
+                              [(ngModel)]="userEditing.isAdmin"
+                            />
+                            <label class="form-check-label" for="admin"
+                              >Admin</label
+                            >
+                          </div>
+                        </div>
+                        <div *ngIf="!askAgain" style="display: inline-block">
+                          <button
+                            type="button"
+                            class="btn btn-sm"
+                            style="margin-right: 10px"
+                            (click)="askAgain = true"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                        <div *ngIf="askAgain" style="display: inline-block">
+                          <button
+                            type="button"
+                            class="btn btn-sm"
+                            style="margin-right: 10px"
+                            (click)="deleteUser(user)"
+                          >
+                            CONFIRM DELETE
+                          </button>
+                        </div>
+                        <button type="submit" class="btn btn-sm">Save</button>
+                        <p
+                          *ngIf="errorNum == 5"
+                          class="text-center"
+                          style="color: red"
+                        >
+                          Username already in use
+                        </p>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

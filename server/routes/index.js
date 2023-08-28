@@ -1,267 +1,142 @@
 var express = require("express");
+var axios = require("axios");
 var dotenv = require("dotenv");
-var request = require("request");
-var querystring = require("querystring");
 
-// let User = require("../models/user.js");
+var router = express.Router();
+const SpotifyWebApi = require("spotify-web-api-node");
+let app = express();
+let User = require("../models/user.js");
 let Song = require("../models/song.js");
 let Album = require("../models/album.js");
 let Artist = require("../models/artist.js");
-let Playlist = require("../models/playlist.js");
-let HomeInfo = require("../models/home-info.js");
-
-var router = express.Router();
+const Playlist = require("../models/playlist.js");
+const HomeInfo = require("../models/home-info.js");
 dotenv.config();
 
-// These values are secret
-var clientId = process.env.CLIENT_ID;
-var clientSecret = process.env.CLIENT_SECRET;
+/** spotify api info*/
+var client_id = process.env.CLIENT_ID;
+var client_secret = process.env.CLIENT_SECRET;
+var accessToken = null;
 
-var redirectUri = "http://localhost:4200/home";
-var stateKey = "spotify_auth_state";
-
-/** Gets the home page */
-
-router.get("/login");
-router.get("/", async function (req, res) {
-    const { code: code, state: state, term: term } = req.query;
-    console.log(req.session);
-    var storedState = req.cookies ? req.cookies[stateKey] : null;
-    var accessToken = req.session.accessToken ? req.session.accessToken : null;
-
-    if (state === null || state !== storedState) {
-        res.status(401).send("state not found");
-        return;
-    } else {
-        if (!req.session.accessToken) {
-            const auth = `${clientId}:${clientSecret}`;
-            const authHeader = `Basic ${Buffer.from(auth).toString("base64")}`;
-            console.log("auth");
-            console.log(auth);
-            var authOptions = {
-                url: "https://accounts.spotify.com/api/token",
-                form: {
-                    code: code,
-                    redirect_uri: redirectUri,
-                    grant_type: "authorization_code",
-                },
-                headers: {
-                    Authorization: authHeader,
-                },
-                json: true,
-            };
-
-            // Call the api to get user access token
-            request.post(authOptions, function (error, response, body) {
-                if (!error && response.statusCode === 200) {
-                    accessToken = body.access_token,
-                    refreshToken = body.refresh_token;
-                    req.session.accessToken = accessToken;
-
-                    var options = {
-                        url: "https://api.spotify.com/v1/me",
-                        headers: { Authorization: "Bearer " + accessToken },
-                        json: true,
-                    };
-            
-                     // use the access token to access the Spotify Web API 
-                     request.get(options, async function (error, response, body) {
-                        try {
-                            // Get the top songs of the user 
-                            const result = await getHomeInfo(term, accessToken);
-                            res.json(result);
-                        } catch (error) {
-                            console.error("Error fetching top tracks:", error);
-                            res.status(500).send("Error fetching top tracks");
-                        }
-                    });
-
-                } else {
-                    res.status(400).send({ msg: "invalid user" });
-                }
-            });
-            
-        } else {
-            var options = {
-                url: "https://api.spotify.com/v1/me",
-                headers: { Authorization: "Bearer " + accessToken },
-                json: true,
-            };
-    
-             // use the access token to access the Spotify Web API 
-             request.get(options, async function (error, response, body) {
-                try {
-                    // Get the top songs of the user 
-                    const result = await getHomeInfo(term, accessToken);
-                    res.json(result);
-                } catch (error) {
-                    console.error("Error fetching top tracks:", error);
-                    res.status(500).send("Error fetching top tracks");
-                }
-            });
-        }
-    }
+const spotifyApi = new SpotifyWebApi({
+    clientId: client_id,
+    clientSecret: client_secret,
 });
 
-router.get("/refresh_token", function (req, res) {
-    // requesting access token from refresh token
-    var refresh_token = req.query.refresh_token;
-    var authOptions = {
-        url: "https://accounts.spotify.com/api/token",
-        headers: {
-            Authorization:
-                "Basic " +
-                new Buffer(client_id + ":" + client_secret).toString("base64"),
-        },
-        form: {
-            grant_type: "refresh_token",
-            refresh_token: refresh_token,
-        },
-        json: true,
-    };
+/** Uses my credentials to get song and artist info */
+spotifyApi.clientCredentialsGrant()
+  .then(({ body }) => {
+    const { access_token } = body;
+    spotifyApi.setAccessToken(access_token);
+    console.log("Received token");
+  })
+  .catch((err) => {
+    console.log("Something went wrong when retrieving an access token", err);
+  });
 
-    request.post(authOptions, function (error, response, body) {
-        if (!error && response.statusCode === 200) {
-            var access_token = body.access_token;
-            res.send({
-                access_token: access_token,
-            });
-        }
-    });
-});
+function getUri(playlist) {
+    return playlist.songs.map((song) => song.uri);
+}
 
-async function fetchWebApi(endpoint, method, token, body) {
-    const res = await fetch(`https://api.spotify.com/${endpoint}`, {
+/** Sends an endpoint to the spotify api */
+async function fetchWebApi(endpoint, method, body) {
+    const result = await fetch(`https://api.spotify.com/${endpoint}`, {
         headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${accessToken}`,
         },
         method,
         body: JSON.stringify(body),
-    });
+    })
+        .then((res) => res.json())
+        .catch((error) => {
+            console.log("Error", error);
 
-    return await res.json();
+            // inspect the error response object to see the error message and status code
+            console.log("Error message", error.message);
+            console.log("HTTP status code", error.statusCode);
+            console.log("Error body", error.body);
+        });
+    return result;
 }
 
-async function getTopTracks(token) {
-    return (
-        await fetchWebApi(
-            "v1/me/top/tracks?time_range=short_term&limit=10",
-            "GET",
-            token
-        )
-    ).items;
+/** ADDS A PLAYLIST TO SPOTIFY */
+async function createPlaylistOnSpotify(playlist) {
+  try {
+    const user = await fetchWebApi('v1/me', 'GET');
+    const user_id = user.display_name;
+    const tracksUri = getUri(playlist);
+
+    const createdPlaylist = await fetchWebApi(`v1/users/${user_id}/playlists`, 'POST', {
+      name: playlist.name,
+      description: 'Playlist created by SpotiFaves',
+      public: false,
+    });
+
+    await fetchWebApi(`v1/playlists/${createdPlaylist.id}/tracks?uris=${tracksUri.join(',')}`, 'POST');
+    return createdPlaylist;
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 /** Gets the information required to display the home screen */
-async function getHomeInfo(term, token) {
+async function getHomeInfo(term, user) {
     var topSongs = null;
     var recommendedSongs = null;
     var topArtists = null;
-    return await getTopFromSpotify(true, term, token)
-        .then((result) => {
-            topSongs = makeSongList(result);
-            return getTopFromSpotify(false, term, token).then((result) => {
-                topArtists = makeArtistList(result);
-                var homeInfo = new HomeInfo(
-                    topSongs,
-                    recommendedSongs,
-                    topArtists
-                );
-                return homeInfo;
-            });
-        })
-        .then((result) => {
-            return result;
+    return await getTopFromSpotify(true, term).then((result) => {
+        topSongs = makeSongList(result);
+        return getTopFromSpotify(false, term).then((result) => {
+            topArtists = makeArtistList(result);
+            var homeInfo = new HomeInfo(topSongs, recommendedSongs, topArtists, Object.values(user.playlists));
+            return homeInfo;
         });
+    }).then(result => {return result});
 }
 
 /** Get a users top songs and artists */
-async function getTopFromSpotify(isSong, term, token) {
-    // getTopTracks(token);
+async function getTopFromSpotify(isSong, term) {
     if (isSong) {
         if (term == "long") {
-            return (
-                await fetchWebApi(
-                    "v1/me/top/tracks?time_range=long_term&limit=30",
-                    "GET",
-                    token
-                )
-            ).items;
+            return (await fetchWebApi("v1/me/top/tracks?time_range=long_term&limit=30", "GET")).items;
         } else if (term == "medium") {
-            return (
-                await fetchWebApi(
-                    "v1/me/top/tracks?time_range=medium_term&limit=30",
-                    "GET",
-                    token
-                )
-            ).items;
+            return (await fetchWebApi("v1/me/top/tracks?time_range=medium_term&limit=30", "GET")).items;
         } else if (term == "short") {
-            return (
-                await fetchWebApi(
-                    "v1/me/top/tracks?time_range=short_term&limit=30",
-                    "GET",
-                    token
-                )
-            ).items;
+            return (await fetchWebApi("v1/me/top/tracks?time_range=short_term&limit=30", "GET")).items;
         }
     } else {
         if (term == "long") {
-            return (
-                await fetchWebApi(
-                    "v1/me/top/artists?time_range=long_term&limit=20",
-                    "GET",
-                    token
-                )
-            ).items;
+            return (await fetchWebApi("v1/me/top/artists?time_range=long_term&limit=20", "GET")).items;
         } else if (term == "medium") {
-            return (
-                await fetchWebApi(
-                    "v1/me/top/artists?time_range=medium_term&limit=20",
-                    "GET",
-                    token
-                )
-            ).items;
+            return (await fetchWebApi("v1/me/top/artists?time_range=medium_term&limit=20", "GET")).items;
         } else if (term == "short") {
-            return (
-                await fetchWebApi(
-                    "v1/me/top/artists?time_range=short_term&limit=20",
-                    "GET",
-                    token
-                )
-            ).items;
+            return (await fetchWebApi("v1/me/top/artists?time_range=short_term&limit=20", "GET")).items;
         }
     }
 }
 
-/** Creates a song model from a song object from spotify */
-function createSongObject(song, isSimple, token) {
-    const { id, name, album, popularity, duration_ms, external_urls, uri } =
-        song;
-
-    const artists = makeArtistList(song.artists, token);
-    // isSimple avoids an infinite loop when getting images
-    const albumImage = isSimple ? null : album.images[1].url;
-    return new Song(
-        id,
-        name,
-        artists,
-        album,
-        popularity,
-        albumImage,
-        duration_ms,
-        external_urls.spotify,
-        uri
-    );
+/* Artists top songs */
+async function getArtistTopTracks(id) {
+    return await fetchWebApi(`v1/artists/${id}/top-tracks?market=US`, "GET").then((result) => {
+        return result.tracks;
+    });
 }
 
-function createArtistObject(artist, addSongs, token) {
+/* Artists albums */
+async function getArtistAlbums(id) {
+    return await fetchWebApi(`v1/artists/${id}/albums?include_groups=album,single&market=US&limit=20`, "GET").then((result) => { 
+        return result.items;
+    });
+}
+
+function createArtistObject(artist, addSongs) {
     const imgUrl = artist.images ? artist.images[0].url : null;
     /* If we are on the artist page we need the top songs without adding an infinite loop */
     if (addSongs) {
-        return getArtistTopTracks(artist.id, token).then((songs) => {
-            var songList = makeSongList(songs, false, token);
-            return getArtistAlbums(artist.id, token).then((albums) => {
-                var albumList = makeAlbumList(albums, token);
+        return getArtistTopTracks(artist.id).then((songs) => {
+            var songList = makeSongList(songs, false);
+            return getArtistAlbums(artist.id).then(albums => {
+                var albumList = makeAlbumList(albums);
                 return new Artist(
                     artist.id,
                     artist.name,
@@ -288,8 +163,29 @@ function createArtistObject(artist, addSongs, token) {
     }
 }
 
-function createAlbumObject(album, shouldAddSongs, token) {
-    const songs = shouldAddSongs ? makeSongList(album, true, token) : null;
+
+/** Creates a song model from a song object from spotify */
+function createSongObject(song, isSimple) {
+    const { id, name, album, popularity, duration_ms, external_urls, uri } =
+        song;
+    const artists = makeArtistList(song.artists);
+    // isSimple avoids an infinite loop when getting images
+    const albumImage = isSimple ? null : album.images[1].url;
+    return new Song(
+        id,
+        name,
+        artists,
+        album,
+        popularity,
+        albumImage,
+        duration_ms,
+        external_urls.spotify,
+        uri
+    );
+}
+
+function createAlbumObject(album, shouldAddSongs) {
+    const songs = shouldAddSongs ? makeSongList(album, true) : null;
     const albumObject = new Album(
         album.id,
         album.name,
@@ -306,53 +202,215 @@ function createAlbumObject(album, shouldAddSongs, token) {
 }
 
 /** Creates a list of song objects */
-function makeSongList(list, isAlbum, token) {
+function makeSongList(list, isAlbum) {
     const songList = [];
     // Album objects have different song objects within them
     if (isAlbum) {
         list.tracks.items.forEach((track) =>
-            songList.push(createSongObject(track, true, token))
+            songList.push(createSongObject(track, true))
         );
     } else {
-        
-        // console.log(list);
-        list.forEach((item) =>
-            songList.push(createSongObject(item, false, token))
-        );
+        list.forEach((item) => songList.push(createSongObject(item, false)));
     }
     return songList;
 }
 
 /** Create a list of artist objects */
-function makeArtistList(list, token) {
-    return list.map((item) => createArtistObject(item, false, token));
+function makeArtistList(list) {
+    return list.map((item) => createArtistObject(item, false));
 }
 
 /** Create a list of album objects */
-function makeAlbumList(list, token) {
-    return list.map((item) => createAlbumObject(item, false, token));
+function makeAlbumList(list) {
+    return list.map((item) => createAlbumObject(item, false));
 }
 
-/* Artists top songs */
-async function getArtistTopTracks(id, token) {
-    return await fetchWebApi(
-        `v1/artists/${id}/top-tracks?market=US`,
-        "GET",
-        token
-    ).then((result) => {
-        return result.tracks;
-    });
+/* Get a song from Spotify */
+router.get("/song/:sid", async (req, res, next) => {
+  const { sid } = req.params;
+
+  try {
+    const data = await spotifyApi.getTrack(sid);
+    res.send(createSongObject(data.body));
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+/* Get an album from Spotify */
+router.get("/album/:aid", async (req, res, next) => {
+  const { aid } = req.params;
+
+  try {
+    const data = await spotifyApi.getAlbum(aid);
+    res.json(createAlbumObject(data.body, true));
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+/* Get an artist from Spotify */
+router.get("/artist/:arid", async (req, res, next) => {
+  const { arid } = req.params;
+
+  try {
+    const data = await spotifyApi.getArtist(arid);
+    const result = await createArtistObject(data.body, true);
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+
+/** Gets the home page */
+const redirect_uri = "http://localhost:4200/home";
+let previousCode = null;
+
+router.get("/", async (req, res, next) => {
+    const { key: code, term: term } = req.query;
+
+    if (code && previousCode !== code) {
+        previousCode = code;
+        try {
+            const { data } = await axios.post(
+                "https://accounts.spotify.com/api/token",
+                null,
+                {
+                    params: {
+                        grant_type: "authorization_code",
+                        code,
+                        redirect_uri,
+                    },
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        Authorization: `Basic ${Buffer.from(
+                            `${client_id}:${client_secret}`
+                        ).toString("base64")}`,
+                    },
+                }
+            );
+
+            // console.log(await checkTokenValidity(data.access_token));
+            delete req.session.user._id;
+            req.session.user.authKey = data.access_token;
+            accessToken = data.access_token;
+            await User.updateUserByUsername(
+                req.session.user.username,
+                req.session.user
+            );
+
+            const result = await getHomeInfo(term, req.session.user);
+            res.json(result);
+        } catch (error) {
+            next(error);
+        }
+    } else {
+        req.session.user = await User.getUserByUsername(
+            req.session.user.username
+        );
+        const result = await getHomeInfo(term, req.session.user);
+        res.json(result);
+    }
+});
+
+/** Checks if a user is valid */
+async function checkTokenValidity(accessToken) {
+  const response = await fetch('https://api.spotify.com/v1/me', {
+    headers: {
+      'Authorization': 'Bearer ' + accessToken
+    }
+  });
+  console.log(response);
+
+  if (response.status === 401) {
+    // The access token is not valid or has expired
+    return false;
+  }
+
+  if (response.status !== 200) {
+    throw new Error('Failed to check token validity: ' + response.status);
+  }
+
+  return true;
 }
 
-/* Artists albums */
-async function getArtistAlbums(id, token) {
-    return await fetchWebApi(
-        `v1/artists/${id}/albums?include_groups=album,single&market=US&limit=20`,
-        "GET",
-        token
-    ).then((result) => {
-        return result.items;
-    });
-}
+/*********  PLAYLIST MANAGEMENT *********/
+
+/** Get a playlist */
+router.get("/playlist/:pid", async function (req, res, next){
+     try {
+         const pid = req.params.pid;
+         const user = await User.getUserByUsername(req.session.user.username);
+         const playlist = user.playlists[pid];
+         res.json(playlist);
+     } catch (err) {
+        res.status(400).json({
+            status: 400,
+            message: err.message,
+        });
+     }
+});
+
+/** Create a playlist */
+router.post("/playlist", async function (req, res, next){
+     try {
+        const playlist = await Playlist.createPlaylist(req.session.user.username);
+        res.json(playlist);
+
+     } catch (err) {
+        res.status(400).json({
+            status: 400,
+            message: err.message,
+        });
+     }
+});
+
+/** edit a playlist */
+router.put("/playlist", async function (req, res, next) {
+    try {
+        const playlist = req.body.playlist;
+        const user = await User.getUserByUsername(req.session.user.username);
+        user.playlists[playlist.id] = playlist;
+        await User.updateUserByUsername(req.session.user.username, user);
+        res.json(playlist);
+    } catch (err) {
+        res.status(400).json({
+             status: 400,
+             message: err.message,
+        });
+    }
+});
+
+/** Delete a playlist */
+router.delete("/playlist/:pid", async function (req, res, next) {
+    try {
+        const pid = req.params.pid;
+        let user = await User.getUserByUsername(req.session.user.username);
+        delete user.playlists[pid];
+        await User.updateUserByUsername(req.session.user.username, user);
+        res.json(user.playlists[pid]);
+        
+    } catch (err) {
+        res.status(400).json({
+            status: 400,
+            message: err.message,
+        });
+    }
+});
+
+router.post("/addToSpotify", async function (req, res, next) {
+    try {
+        let playlist = req.body.playlist;
+        playlist = await createPlaylistOnSpotify(playlist);
+        res.send(playlist);
+        
+    } catch (err) {
+        res.status(400).json({
+            status: 400,
+            message: err.message,
+        });
+    }
+});
 
 module.exports = router;

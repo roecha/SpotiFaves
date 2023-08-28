@@ -1,0 +1,28 @@
+<nav class="navbar navbar-expand-lg">
+  <div class="container-fluid">
+    <a class="navbar-brand d-flex align-items-center" [routerLink]="['/home']">
+      <img src="../../../assets/logo.png" height="30" class="d-inline-block align-top" alt="Spotify Logo">
+      <span>Spotifaves</span>
+    </a>
+    <button class="btn" [routerLink]="['/home']" *ngIf="isLoggedIn">
+          <i class="fa-solid fa-house" style="margin-right: 10px;"></i>Home
+    </button>
+    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <p style="margin: 0;">{{username}}</p>
+        </li>
+        <li class="nav-item">
+          <div *ngIf="isAdmin">
+            <a class="nav-link" [routerLink]="['/admin']">Admin View</a>
+          </div>
+        </li>
+        <li class="nav-item">
+          <div *ngIf="isLoggedIn">
+            <a class="nav-link" (click)="logout()">Logout</a>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>

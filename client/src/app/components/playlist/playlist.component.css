@@ -1,0 +1,67 @@
+
+h1 {
+    font-family: 'Nunito Sans', sans-serif;
+    font-weight: 800;
+    font-size: 40px;
+
+}
+
+table {
+    font-family: 'Nunito Sans', sans-serif;
+    margin-top: 20px;
+}
+
+th {
+    font-weight: 700;
+    font-size: 20px;
+    /* background-color: #FFFFF0; */
+    color: #FFFFF0;
+    font-weight: 800;
+    background-color: #282828;
+    /* border-bottom: solid;
+    border-bottom: 1px 0 #FFFFF0; */
+}
+
+td {
+    color: #FFFFF0 !important;
+}
+
+.clickable {
+    text-decoration: underline;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+.clickable:hover {
+    color: #1db954 !important;
+    cursor: pointer;
+}
+
+#add-to-spot:hover, .btn:hover {
+    background-color: #15823b;
+    border-color: #15823b;
+}
+
+#add-to-spot {
+    /* margin-bottom: 20px; */
+    font-size: 15px;
+    font-family: 'Nunito Sans', sans-serif;
+    font-weight: 800;
+    background-color: #1db954;
+    border-color: #1db954;
+    color: #282828;
+}
+.btn-danger:hover {
+    background-color: #a63939;
+    border-color: #a63939;
+}
+
+.btn {
+    margin: 0px 20px 0px 20px;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  align-items: center; 
+}

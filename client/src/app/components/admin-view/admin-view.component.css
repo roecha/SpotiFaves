@@ -1,0 +1,68 @@
+#create-form {
+  max-width : 400px;
+  min-width: 300px;
+  padding: 15px;
+  background-color : #282828;
+  border-radius: .5em;
+  margin-top: 20px;
+}
+
+.form-group {
+  margin-top: 15px;
+}
+
+.btn {
+  width: 100px;
+  margin-top: 15px;
+  margin-bottom: 20px;
+  font-size: 20px;
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: 800;
+  background-color: #1db954;
+  border-color: #1db954;
+  color: #282828;
+}
+
+.btn:hover {
+  background-color: #15823b;
+  border-color: #15823b;
+}
+
+table {
+  font-family: 'Nunito Sans', sans-serif;
+}
+
+th {
+  font-size: 20px;
+  font-weight: 800;
+  color: #282828;
+  margin: 0;
+  border-bottom: 1px solid #FFFFF0;
+}
+
+td {
+  color: #FFFFF0 !important;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.btn-sm {
+  font-size: 15px;
+  margin: 0;
+}
+
+.editing {
+  font-size: 18px;
+}
+
+h3 {
+  text-align: center;
+  color: #D9D9D9;
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: 400;
+}
+
+.checkbox-label {
+  float: left;
+  margin-right: 10px;
+}

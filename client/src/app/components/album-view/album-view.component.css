@@ -1,0 +1,86 @@
+img {
+  width: 300px;
+  height: 300px;
+  margin-top: 25px;
+}
+
+h1 {
+  margin: 50px 0;
+  color: #FFFFF0;
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: 900;
+}
+
+table {
+  font-family: 'Nunito Sans', sans-serif;
+}
+
+th {
+  font-weight: 700;
+  font-size: 20px;
+  color: #FFFFF0;
+  font-weight: 800;
+  background-color: #282828;
+}
+
+td {
+  color: #FFFFF0 !important;
+}
+
+.clickable {
+  text-decoration: underline;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.clickable:hover {
+  color: #1db954 !important;
+  cursor: pointer;
+}
+
+#popularity {
+  margin-top: 25px;
+  width: 15em;
+  height: auto;
+  border: 5px solid #282828;
+  border-radius: 5px;
+  background-color: #1db954;
+  color: #282828;
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: 900;
+}
+
+#score {
+  font-size: 40px;
+  margin-bottom: 0;
+}
+
+#spotify-button {
+  width: 8em;
+  height: auto;
+  border: 3px solid #1db954;
+  border-radius: 100px;
+  background-color: #282828;
+  color: #1db954;
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: 900;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+#open-in {
+  margin: 25px 0 0;
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: 900;
+  font-size: 17px;
+}
+
+#logo {
+  width: 6em;
+  height: auto;
+  margin: 5px 0;
+}
+
+#spotify-button:hover {
+  background-color: #535353;
+}

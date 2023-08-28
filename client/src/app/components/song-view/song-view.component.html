@@ -1,0 +1,45 @@
+<div class="background">
+    <!-- <div class="containter">
+        <div class="col-4"> 
+
+        </div>
+        <div class="col-4">
+            <div class="row" id="img-div">
+                <img class="mx-auto d-block" src="{{album.img}}" alt="'{{album.name}}' cover art">
+            </div>
+        </div>
+        <div class="col-4">
+        
+        </div>
+    </div> -->
+    <div class="container-fluid">
+		<div class="row">
+			<div class="col-md-4"></div>
+			<div class="col-md-4">
+                <div class="card shadow">
+                    <img class="card-img-top" src="{{song.img}}" alt="{{song.name}} album image">
+                    <div class="card-body text-center" style="color: white">
+                        <div *ngFor="let artist of song.artist;">
+                            <p class="card-text">{{artist.name}}</p>
+                        </div>
+                        <h1 class="card-title">{{song.name}}</h1>
+                    
+                    </div>
+                </div>
+            </div>
+			<div class="col-md-4">
+                <div class="text-center mx-auto shadow" id="popularity">
+                    <p style="margin-bottom: 0px; font-size: 20px;">Popularity Score:</p>
+                    <p id="score">{{song.popularity}}</p>
+                </div>
+
+                <div class="container mx-auto text-center">
+                    <p id="open-in">Open in</p>
+                    <div class="text-center mx-auto shadow" id="spotify-button" (click)="openSpotify()">
+                        <img id="logo" src="../../../assets/logo2.png" alt="spotify logo">
+                    </div>
+                </div>
+            </div>
+		</div>
+	</div>
+</div>
